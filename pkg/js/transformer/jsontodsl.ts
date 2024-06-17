@@ -267,16 +267,23 @@ const parseType = (typeDef: TypeDefinition, isModularModel: boolean, includeSour
 const parseConditionParams = (parameterMap: Record<string, ConditionParamTypeRef>): string => {
   const parametersStringArray: string[] = [];
 
+  const recurse = (pType: ConditionParamTypeRef): string => {
+    if (!pType) {
+      return "";
+    }
+    const pTypeName = pType.type_name.replace("TYPE_NAME_", "").toLowerCase();
+    if (!pType.generic_types || pType.generic_types.length === 0) {
+      return pTypeName;
+    }
+    return `${pTypeName}<${recurse(pType.generic_types[0])}>`;
+  };
+
   Object.keys(parameterMap)
     .sort()
     .forEach((parameterName) => {
       const parameterType = parameterMap[parameterName];
-      let parameterTypeString = parameterType.type_name.replace("TYPE_NAME_", "").toLowerCase();
-      if (parameterTypeString === "list" || parameterTypeString === "map") {
-        const genericTypeString = parameterType.generic_types?.[0].type_name.replace("TYPE_NAME_", "").toLowerCase();
-        parameterTypeString = `${parameterTypeString}<${genericTypeString}>`;
-      }
-      parametersStringArray.push(`${parameterName}: ${parameterTypeString}`);
+
+      parametersStringArray.push(`${parameterName}: ${recurse(parameterType)}`);
     });
 
   return parametersStringArray.join(", ");

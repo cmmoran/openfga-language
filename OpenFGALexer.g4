@@ -150,7 +150,8 @@ CONDITION_PARAM_TYPE:
 	| 'double'
 	| 'duration'
 	| 'timestamp'
-	| 'ipaddress';
+	| 'ipaddress'
+	| 'any';
 
 CONDITION_PARAM_TYPE_LESS: LESS -> type(LESS);
 CONDITION_PARAM_TYPE_GREATER: GREATER -> type(GREATER);

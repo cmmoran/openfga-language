@@ -1,4 +1,4 @@
-import type {
+import {
   AuthorizationModel,
   Condition,
   ConditionParamTypeRef,
@@ -6,6 +6,7 @@ import type {
   RelationMetadata,
   RelationReference,
   TypeDefinition,
+  TypeName,
   Userset,
 } from "@openfga/sdk";
 import * as antlr from "antlr4";
@@ -18,6 +19,7 @@ import OpenFGAParser, {
   ConditionParameterContext,
   ModelHeaderContext,
   ModuleHeaderContext,
+  ParameterTypeContext,
   RelationDeclarationContext,
   RelationDefDirectAssignmentContext,
   RelationDefPartialsContext,
@@ -27,7 +29,6 @@ import OpenFGAParser, {
   TypeDefsContext,
 } from "../gen/OpenFGAParser";
 import { DSLSyntaxError, DSLSyntaxSingleError } from "../errors";
-import { TypeName } from "@openfga/sdk";
 
 enum RelationDefinitionOperator {
   RELATION_DEFINITION_OPERATOR_NONE = "",
@@ -376,21 +377,35 @@ class OpenFgaDslListener extends OpenFGAListener {
       );
     }
 
-    const paramContainer = ctx.parameterType().CONDITION_PARAM_CONTAINER();
-    const conditionParamTypeRef: Partial<ConditionParamTypeRef> = {};
-    if (paramContainer) {
-      conditionParamTypeRef.type_name = `TYPE_NAME_${paramContainer.getText().toUpperCase()}` as TypeName;
-      const genericTypeName =
-        ctx.parameterType().CONDITION_PARAM_TYPE() &&
-        (`TYPE_NAME_${ctx.parameterType().CONDITION_PARAM_TYPE().getText().toUpperCase()}` as TypeName);
-      if (genericTypeName) {
-        conditionParamTypeRef.generic_types = [{ type_name: genericTypeName }];
-      }
+    this.currentCondition!.parameters![parameterName] = this.recurseParameterTypeContext(
+      ctx.parameterType(),
+    ) as ConditionParamTypeRef;
+  };
+
+  recurseParameterTypeContext = (pType: ParameterTypeContext): ConditionParamTypeRef => {
+    if (!pType) {
+      return {} as ConditionParamTypeRef;
+    }
+    const paramType = pType.CONDITION_PARAM_TYPE();
+    const genericType = pType.CONDITION_PARAM_CONTAINER();
+
+    let typeName: TypeName;
+    if (!paramType) {
+      typeName = `TYPE_NAME_${genericType.getText().toUpperCase()}` as TypeName;
     } else {
-      conditionParamTypeRef.type_name = `TYPE_NAME_${ctx.parameterType().getText().toUpperCase()}` as TypeName;
+      typeName = `TYPE_NAME_${paramType.getText().toUpperCase()}` as TypeName;
     }
 
-    this.currentCondition!.parameters![parameterName] = conditionParamTypeRef as ConditionParamTypeRef;
+    const types = this.recurseParameterTypeContext(pType.parameterType());
+    if (types.type_name === undefined && types.generic_types === undefined) {
+      return {
+        type_name: typeName,
+      } as ConditionParamTypeRef;
+    }
+    return {
+      type_name: typeName,
+      generic_types: [types],
+    } as ConditionParamTypeRef;
   };
 
   exitConditionExpression = (ctx: ConditionExpressionContext) => {

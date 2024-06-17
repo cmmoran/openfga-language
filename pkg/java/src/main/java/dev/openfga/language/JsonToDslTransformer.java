@@ -354,27 +354,24 @@ public class JsonToDslTransformer {
 
         return new TreeMap<>(parameters)
                 .entrySet().stream()
-                        .map(entry -> {
-                            var parameterName = entry.getKey();
-                            var parameterType = entry.getValue();
-                            var formattedParameterType = parameterType
-                                    .getTypeName()
-                                    .getValue()
-                                    .replace("TYPE_NAME_", "")
-                                    .toLowerCase();
-                            if (formattedParameterType.equals("list") || formattedParameterType.equals("map")) {
-                                var genericTypeString = parameterType
-                                        .getGenericTypes()
-                                        .get(0)
-                                        .getTypeName()
-                                        .getValue()
-                                        .replace("TYPE_NAME_", "")
-                                        .toLowerCase();
-                                formattedParameterType = formattedParameterType + "<" + genericTypeString + ">";
-                            }
-                            return new StringBuilder(parameterName).append(": ").append(formattedParameterType);
-                        })
+                        .map(entry -> formatConditionParameter(entry.getKey(), recurseConditionParamType(entry.getValue())))
                         .collect(joining(", "));
+    }
+
+    private CharSequence formatConditionParameter(String parameterName, String parameterType) {
+        return new StringBuilder(parameterName).append(": ").append(parameterType);
+    }
+
+    private String recurseConditionParamType(ConditionParamTypeRef typeRef) {
+        if (typeRef == null) {
+            return "";
+        }
+        var typeString = typeRef.getTypeName().getValue().replace("TYPE_NAME_", "").toLowerCase();
+        if (typeRef.getGenericTypes() == null || typeRef.getGenericTypes().isEmpty()) {
+            return typeString;
+        }
+
+        return typeString + "<" + recurseConditionParamType(typeRef.getGenericTypes().get(0)) + ">";
     }
 
     private interface RelationFormatter {

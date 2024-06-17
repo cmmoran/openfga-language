@@ -995,15 +995,15 @@
       status != "deleted"
     }
   expected_errors:
-    - msg: "mismatched input 'map' expecting CONDITION_PARAM_TYPE"
+    - msg: "mismatched input '>' expecting '<'"
       line:
         start: 6
         end: 6
       column:
-        start: 37
-        end: 40
+        start: 40
+        end: 41
       metadata:
-        symbol: "map"
+        symbol: ">"
 - name: unsupported parameter type list<map>
   dsl: |
     model
@@ -1016,15 +1016,15 @@
       status != "deleted"
     }
   expected_errors:
-    - msg: "mismatched input 'map' expecting CONDITION_PARAM_TYPE"
+    - msg: "mismatched input '>' expecting '<'"
       line:
         start: 6
         end: 6
       column:
-        start: 38
-        end: 41
+        start: 41
+        end: 42
       metadata:
-        symbol: "map"
+        symbol: ">"
 - name: unsupported parameter type map<list>
   dsl: |
     model
@@ -1037,15 +1037,15 @@
       status != "deleted"
     }
   expected_errors:
-    - msg: "mismatched input 'list' expecting CONDITION_PARAM_TYPE"
+    - msg: "mismatched input '>' expecting '<'"
       line:
         start: 6
         end: 6
       column:
-        start: 37
-        end: 41
+        start: 41
+        end: 42
       metadata:
-        symbol: "list"
+        symbol: ">"
 - name: unsupported parameter type list<list>
   dsl: |
     model
@@ -1058,15 +1058,15 @@
       status != "deleted"
     }
   expected_errors:
-    - msg: "mismatched input 'list' expecting CONDITION_PARAM_TYPE"
+    - msg: "mismatched input '>' expecting '<'"
       line:
         start: 6
         end: 6
       column:
-        start: 38
-        end: 42
+        start: 42
+        end: 43
       metadata:
-        symbol: "list"
+        symbol: ">"
 - name: parameter type list needs generic type
   dsl: |
     model

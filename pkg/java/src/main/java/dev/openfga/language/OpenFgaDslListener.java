@@ -124,27 +124,23 @@ public class OpenFgaDslListener extends OpenFGAParserBaseListener {
             parser.notifyErrorListeners(ctx.parameterName().start, message, null);
         }
 
-        var paramContainer = ctx.parameterType().CONDITION_PARAM_CONTAINER();
-        var conditionParamTypeRef = new PartialConditionParamTypeRef();
-        var typeName = ctx.parameterType().getText();
-        if (paramContainer != null) {
-            typeName = paramContainer.getText();
-            conditionParamTypeRef.setTypeName(parseTypeName(paramContainer.getText()));
-            if (ctx.parameterType().CONDITION_PARAM_TYPE() != null) {
-                var genericTypeName =
-                        parseTypeName(ctx.parameterType().CONDITION_PARAM_TYPE().getText());
-                if (genericTypeName != TypeName.UNKNOWN_DEFAULT_OPEN_API) {
-                    conditionParamTypeRef.setGenericTypes(new ArrayList<>() {
-                        {
-                            add(new ConditionParamTypeRef().typeName(genericTypeName));
-                        }
-                    });
-                }
-            }
-        }
-        conditionParamTypeRef.setTypeName(parseTypeName(typeName));
+        currentCondition.getParameters().put(parameterName, recurseParameterContext(ctx.parameterType()));
+    }
 
-        currentCondition.getParameters().put(parameterName, conditionParamTypeRef.asConditionParamTypeRef());
+    private ConditionParamTypeRef recurseParameterContext(OpenFGAParser.ParameterTypeContext ctx) {
+        if (ctx == null) {
+            return null;
+        }
+        var paramType = ctx.CONDITION_PARAM_TYPE();
+        var genericType = ctx.CONDITION_PARAM_CONTAINER();
+
+        var typeName = paramType == null ? parseTypeName(genericType.getText()) : parseTypeName(paramType.getText());
+        var types = recurseParameterContext(ctx.parameterType());
+        if (types == null) {
+            return new ConditionParamTypeRef().typeName(typeName);
+        } else {
+            return new ConditionParamTypeRef().typeName(typeName).genericTypes(List.of(types));
+        }
     }
 
     private TypeName parseTypeName(String typeName) {

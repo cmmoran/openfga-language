@@ -385,20 +385,23 @@ func parseConditionParams(parameterMap map[string]*pb.ConditionParamTypeRef) str
 
 	for _, parameterName := range parameterNames {
 		parameterType := parameterMap[parameterName]
-		parameterTypeString := strings.ToLower(strings.ReplaceAll(parameterType.GetTypeName().String(), "TYPE_NAME_", ""))
 
-		if parameterTypeString == "list" || parameterTypeString == "map" {
-			genericTypeString := strings.ToLower(
-				strings.ReplaceAll(
-					parameterType.GetGenericTypes()[0].GetTypeName().String(), "TYPE_NAME_", ""),
-			)
-			parameterTypeString = fmt.Sprintf("%s<%s>", parameterTypeString, genericTypeString)
-		}
-
-		parametersStringArray = append(parametersStringArray, fmt.Sprintf("%s: %s", parameterName, parameterTypeString))
+		parametersStringArray = append(parametersStringArray, fmt.Sprintf("%s: %s", parameterName, recursiveParseConditionParams(parameterType)))
 	}
 
 	return strings.Join(parametersStringArray, ", ")
+}
+
+func recursiveParseConditionParams(ptype *pb.ConditionParamTypeRef) string {
+	if ptype == nil {
+		return ""
+	}
+	ptypeName := strings.ToLower(strings.ReplaceAll(ptype.GetTypeName().String(), "TYPE_NAME_", ""))
+	if ptype.GenericTypes == nil || len(ptype.GenericTypes) == 0 {
+		return ptypeName
+	}
+
+	return fmt.Sprintf("%s<%s>", ptypeName, recursiveParseConditionParams(ptype.GenericTypes[0]))
 }
 
 func parseCondition(conditionName string, conditionDef *pb.Condition, includeSourceInformation bool) (string, error) {

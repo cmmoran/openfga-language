@@ -12,6 +12,10 @@
           "is_valid": {
             "directly_related_user_types": [
               {
+                "condition": "is_valid_map_map_string",
+                "type": "user"
+              },
+              {
                 "condition": "is_valid_string",
                 "type": "user"
               },
@@ -60,6 +64,25 @@
     }
   ],
   "conditions": {
+    "is_valid_map_map_string": {
+      "expression": "_mapmapstring != null",
+      "name": "is_valid_map_map_string",
+      "parameters": {
+        "_mapmapstring": {
+          "generic_types": [
+            {
+              "generic_types": [
+                {
+                  "type_name": "TYPE_NAME_STRING"
+                }
+              ],
+              "type_name": "TYPE_NAME_MAP"
+            }
+          ],
+          "type_name": "TYPE_NAME_MAP"
+        }
+      }
+    },
     "is_valid_double": {
       "expression": "_double != 0.0 \u0026\u0026 _double \u003e 0.0",
       "name": "is_valid_double",

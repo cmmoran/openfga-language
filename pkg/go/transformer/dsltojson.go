@@ -183,40 +183,40 @@ func (l *OpenFgaDslListener) ExitConditionParameter(ctx *parser.ConditionParamet
 			nil)
 	}
 
-	paramContainer := ctx.ParameterType().CONDITION_PARAM_CONTAINER()
-	typeNameString := ctx.ParameterType().GetText()
+	l.currentCondition.Parameters[parameterName] = recursiveParseParameterType(ctx.ParameterType())
+}
 
-	var genericName *pb.ConditionParamTypeRef_TypeName
+func recursiveParseParameterType(cpc parser.IParameterTypeContext) *pb.ConditionParamTypeRef {
+	if cpc == nil {
+		return nil
+	}
+	paramType := cpc.CONDITION_PARAM_TYPE()
+	genericType := cpc.CONDITION_PARAM_CONTAINER()
 
-	if paramContainer != nil {
-		typeNameString = paramContainer.GetText()
-		genericType := ctx.ParameterType().CONDITION_PARAM_TYPE()
-
-		if genericType != nil {
-			genericString := ctx.ParameterType().CONDITION_PARAM_TYPE().GetText()
-			genericName = new(pb.ConditionParamTypeRef_TypeName)
-			*genericName = pb.ConditionParamTypeRef_TypeName(
-				pb.ConditionParamTypeRef_TypeName_value["TYPE_NAME_"+strings.ToUpper(genericString)],
-			)
+	var typeName = new(pb.ConditionParamTypeRef_TypeName)
+	if paramType == nil {
+		*typeName = pb.ConditionParamTypeRef_TypeName(
+			pb.ConditionParamTypeRef_TypeName_value["TYPE_NAME_"+strings.ToUpper(genericType.GetText())],
+		)
+	} else {
+		*typeName = pb.ConditionParamTypeRef_TypeName(
+			pb.ConditionParamTypeRef_TypeName_value["TYPE_NAME_"+strings.ToUpper(paramType.GetText())],
+		)
+	}
+	types := recursiveParseParameterType(cpc.ParameterType())
+	if types == nil {
+		return &pb.ConditionParamTypeRef{
+			TypeName:     *typeName,
+			GenericTypes: []*pb.ConditionParamTypeRef{},
 		}
 	}
-
-	typeName := new(pb.ConditionParamTypeRef_TypeName)
-	*typeName = pb.ConditionParamTypeRef_TypeName(
-		pb.ConditionParamTypeRef_TypeName_value["TYPE_NAME_"+strings.ToUpper(typeNameString)],
-	)
-	conditionParamTypeRef := &pb.ConditionParamTypeRef{
-		TypeName:     *typeName,
-		GenericTypes: []*pb.ConditionParamTypeRef{},
+	return &pb.ConditionParamTypeRef{
+		TypeName: *typeName,
+		GenericTypes: []*pb.ConditionParamTypeRef{
+			types,
+		},
 	}
 
-	if genericName != nil {
-		conditionParamTypeRef.GenericTypes = append(conditionParamTypeRef.GenericTypes, &pb.ConditionParamTypeRef{
-			TypeName: *genericName,
-		})
-	}
-
-	l.currentCondition.Parameters[parameterName] = conditionParamTypeRef
 }
 
 func (l *OpenFgaDslListener) ExitConditionExpression(ctx *parser.ConditionExpressionContext) {
